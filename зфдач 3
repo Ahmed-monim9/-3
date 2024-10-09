@@ -1,0 +1,62 @@
+import sqlite3  # Можно заменить на pymysql или psycopg2 в зависимости от базы данных
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, Border, Side
+import datetime
+
+# Подключение к базе данных SQLite (замените на нужное подключение, если работаете с MySQL/PostgreSQL)
+conn = sqlite3.connect('employees.db')
+cursor = conn.cursor()
+
+# Извлечение данных сотрудников из базы данных
+cursor.execute("SELECT id, name, position, age, salary FROM employees")
+employees = cursor.fetchall()
+
+# Создание нового Excel файла
+wb = Workbook()
+ws = wb.active
+ws.title = "Данные сотрудников"
+
+# Добавление заголовков
+headers = ["ID Сотрудника", "ФИО", "Должность", "Возраст", "Зарплата (руб.)"]
+ws.append(headers)
+
+# Форматирование заголовков
+header_font = Font(bold=True, color="FFFFFF")
+header_alignment = Alignment(horizontal="center", vertical="center")
+header_fill = "000000"
+thin_border = Border(
+    left=Side(style='thin'),
+    right=Side(style='thin'),
+    top=Side(style='thin'),
+    bottom=Side(style='thin')
+)
+
+# Применение форматирования к заголовкам
+for col_num, col in enumerate(headers, 1):
+    cell = ws.cell(row=1, column=col_num, value=col)
+    cell.font = header_font
+    cell.alignment = header_alignment
+    cell.fill = openpyxl.styles.PatternFill(start_color=header_fill, end_color=header_fill, fill_type="solid")
+    cell.border = thin_border
+
+# Добавление данных сотрудников
+for row_num, employee in enumerate(employees, 2):
+    ws.append(employee)
+
+# Применение форматирования к ячейкам с данными
+for row in ws.iter_rows(min_row=2, max_row=len(employees) + 1, min_col=1, max_col=len(headers)):
+    for cell in row:
+        cell.alignment = Alignment(horizontal="left", vertical="center")
+        cell.border = thin_border
+
+# Пример добавления общей информации (дата создания отчета)
+ws["A" + str(len(employees) + 3)] = f"Дата создания: {datetime.datetime.now().strftime('%Y-%m-%d')}"
+
+# Сохранение Excel-файла
+file_name = "Данные_сотрудников.xlsx"
+wb.save(file_name)
+
+# Закрытие соединения с базой данных
+conn.close()
+
+print(f"Excel файл '{file_name}' успешно создан.")
